@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+    <h2 class="mb-4">View Ad Requests</h2>
+
+    {% for ad_request in ad_requests %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Campaign: {{ ad_request.campaign.name }}</h5>
+            <p><strong>Messages:</strong> {{ ad_request.messages }}</p>
+            <p><strong>Requirements:</strong> {{ ad_request.requirements }}</p>
+            <p><strong>Payment Amount:</strong> ${{ ad_request.payment_amount }}</p>
+            <p><strong>Status:</strong> {{ ad_request.status }}</p>
+
+            {% if ad_request.status == 'pending' %}
+                <form action="{{ url_for('respond_ad_request', ad_request_id=ad_request.id) }}" method="post">
+                    <button type="submit" name="action" value="accept" class="btn btn-success">Accept</button>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger">Reject</button>
+                    <div class="input-group mt-2">
+                        <input type="number" step="0.01" name="new_amount" class="form-control" placeholder="New amount">
+                        <div class="input-group-append">
+                            <button type="submit" name="action" value="negotiate" class="btn btn-primary">Negotiate</button>
+                        </div>
+                    </div>
+                </form>
+            {% elif ad_request.status == 'negotiating' %}
+                {% if ad_request.last_updated_by == 'sponsor' %}
+                    <p>Sponsor's latest offer: ${{ ad_request.proposed_amount }}</p>
+                    <form action="{{ url_for('respond_ad_request', ad_request_id=ad_request.id) }}" method="post">
+                        <button type="submit" name="action" value="accept" class="btn btn-success">Accept Offer</button>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger">Reject Offer</button>
+                        <div class="input-group mt-2">
+                            <input type="number" step="0.01" name="new_amount" class="form-control" placeholder="Counter-offer amount">
+                            <div class="input-group-append">
+                                <button type="submit" name="action" value="negotiate" class="btn btn-primary">Send Counter-offer</button>
+                            </div>
+                        </div>
+                    </form>
+                {% else %}
+                    <p>Waiting for sponsor's response to your offer of ${{ ad_request.proposed_amount }}</p>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

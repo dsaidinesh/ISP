@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">Edit Ad Request</a>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('sponsor_dashboard') }}">Back to Dashboard</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Edit Ad Request</h1>
+    <form action="{{ url_for('edit_ad_request', ad_request_id=ad_request.id) }}" method="POST">
+        <div class="mb-3">
+            <label for="influencer_id" class="form-label">Influencer:</label>
+            <select class="form-select" id="influencer_id" name="influencer_id" required>
+                {% for influencer in influencers %}
+                    <option value="{{ influencer.id }}" {% if influencer.id == ad_request.influencer_id %}selected{% endif %}>
+                        {{ influencer.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="messages" class="form-label">Messages:</label>
+            <textarea class="form-control" id="messages" name="messages" rows="3" required>{{ ad_request.messages }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="requirements" class="form-label">Requirements:</label>
+            <textarea class="form-control" id="requirements" name="requirements" rows="3" required>{{ ad_request.requirements }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="payment_amount" class="form-label">Payment Amount:</label>
+            <input type="number" class="form-control" id="payment_amount" name="payment_amount" value="{{ ad_request.payment_amount }}" step="0.01" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="status" class="form-label">Status:</label>
+            <select class="form-select" id="status" name="status" required>
+                <option value="pending" {% if ad_request.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="accepted" {% if ad_request.status == 'accepted' %}selected{% endif %}>Accepted</option>
+                <option value="rejected" {% if ad_request.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                <option value="negotiating" {% if ad_request.status == 'negotiating' %}selected{% endif %}>Negotiating</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Ad Request</button>
+    </form>
+</div>
+
+{% endblock %}

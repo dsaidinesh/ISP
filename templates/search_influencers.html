@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+    <h2>Search Influencers</h2>
+
+    {% if campaign %}
+    <h3>For Campaign: {{ campaign.name }}</h3>
+    {% endif %}
+
+    <form action="{{ url_for('search_influencers') }}" method="GET" class="mb-4">
+        <div class="form-row">
+            <div class="col">
+                <input type="text" name="query" class="form-control" placeholder="Search by name" value="{{ request.args.get('query', '') }}">
+            </div>
+            <div class="col">
+                <select name="category" class="form-control">
+                    <option value="">All Categories</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Lifestyle">Lifestyle</option>
+                    <option value="Food">Food</option>
+                </select>
+            </div>
+            <div class="col">
+                <input type="number" name="min_reach" class="form-control" placeholder="Min Reach" value="{{ request.args.get('min_reach', '') }}">
+            </div>
+            <div class="col">
+                <button type="submit" class="btn btn-primary">Search</button>
+                <a href="{{ url_for('search_influencers', campaign_id=campaign.id if campaign else None) }}" class="btn btn-secondary">Clear Filters</a>
+            </div>
+        </div>
+        {% if campaign %}
+        <input type="hidden" name="campaign_id" value="{{ campaign.id }}">
+        {% endif %}
+    </form>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Niche</th>
+                <th>Reach</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for influencer in influencers %}
+            <tr>
+                <td>{{ influencer.name }}</td>
+                <td>{{ influencer.category }}</td>
+                <td>{{ influencer.niche }}</td>
+                <td>{{ influencer.reach }}</td>
+                <td>
+                    {% if campaign %}
+                        <a href="{{ url_for('create_ad_request', campaign_id=campaign.id, influencer_id=influencer.id) }}" class="btn btn-primary btn-sm">Select Influencer</a>
+                    {% else %}
+                        <span class="text-muted">No Campaign Selected</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

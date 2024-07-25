@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container my-5">
+    <h2 class="mb-4 text-center">Create Ad Request for Campaign: {{ campaign.name }}</h2>
+
+    <form action="{{ url_for('create_ad_request', campaign_id=campaign.id) }}" method="POST">
+        <div class="form-row mb-3">
+            <div class="col-md-6">
+                <label for="influencer_id">Select Influencer</label>
+                <div class="input-group">
+                    <select name="influencer_id" id="influencer_id" class="form-control" required>
+                        <option value="">Choose an influencer</option>
+                        {% for influencer in influencers %}
+                            <option value="{{ influencer.id }}" {% if influencer.id|string == request.args.get('influencer_id', '') %}selected{% endif %}>
+                                {{ influencer.name }} ({{ influencer.category }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="input-group-append">
+                        <a href="{{ url_for('search_influencers', campaign_id=campaign.id) }}" class="btn btn-secondary">Search Influencers</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row mb-3">
+            <div class="col">
+                <label for="messages">Messages</label>
+                <textarea name="messages" id="messages" class="form-control" rows="3" required></textarea>
+            </div>
+        </div>
+
+        <div class="form-row mb-3">
+            <div class="col">
+                <label for="requirements">Requirements</label>
+                <textarea name="requirements" id="requirements" class="form-control" rows="3" required></textarea>
+            </div>
+        </div>
+
+        <div class="form-row mb-3">
+            <div class="col-md-6">
+                <label for="payment_amount">Payment Amount</label>
+                <input type="number" name="payment_amount" id="payment_amount" class="form-control" step="0.01" required>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Create Ad Request</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

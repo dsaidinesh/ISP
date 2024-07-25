@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4 d-flex justify-content-center">
+    <div class="col-md-4">
+    <h2 class="text-center fs-1 mb-5 font-monospace ">Login</h2>
+    <form method="POST" class=" p-4 border bg-info rounded">
+        <div class="form-group mb-3">
+            <label for="username" class=" fw-bold text-center d-block font-monospace">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="password" class="fw-bold text-center d-block font-monospace">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+    </form>
+</div>
+</div>
+{% endblock %}
