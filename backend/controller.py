@@ -3,6 +3,7 @@ from flask_login import login_user, login_required, logout_user, current_user
 from .models import *
 from flask import current_app as app
 from datetime import timedelta
+from sqlalchemy.sql import func
 
 @app.route("/")
 def home():
@@ -76,6 +77,9 @@ def login():
 
         user = User.query.filter_by(username=username).first()
         if user and user.password == password:
+            if user.flagged:
+                flash("Your account has been flagged. Please contact support.")
+                return redirect(url_for("login"))
             login_user(user)
             user.last_login = datetime.utcnow()
             db.session.commit()
@@ -116,6 +120,20 @@ def admin_dashboard():
     private_campaigns = Campaign.query.filter_by(visibility="private").count()
     pending_ad_requests = AdRequest.query.filter_by(status="pending").count()
     flagged_users = User.query.filter_by(flagged=True).count()
+    
+    total_sponsors = Sponsor.query.count()
+    total_influencers = Influencer.query.count()
+    total_campaigns = Campaign.query.count()
+    total_ad_requests = AdRequest.query.count()
+    
+    avg_campaign_budget = db.session.query(func.avg(Campaign.budget)).scalar()
+    avg_campaign_budget = round(avg_campaign_budget, 2) if avg_campaign_budget else 0
+    
+    avg_influencer_reach = db.session.query(func.avg(Influencer.reach)).scalar()
+    avg_influencer_reach = int(avg_influencer_reach) if avg_influencer_reach else 0
+    
+    campaign_success_rate = (AdRequest.query.filter_by(status="accepted").count() / total_ad_requests) * 100 if total_ad_requests > 0 else 0
+    campaign_success_rate = round(campaign_success_rate, 2)
 
     return render_template(
         "admin_dashboard.html",
@@ -126,10 +144,17 @@ def admin_dashboard():
         public_campaigns=public_campaigns,
         private_campaigns=private_campaigns,
         pending_ad_requests=pending_ad_requests,
-        flagged_users=flagged_users
+        flagged_users=flagged_users,
+        total_sponsors=total_sponsors,
+        total_influencers=total_influencers,
+        total_campaigns=total_campaigns,
+        total_ad_requests=total_ad_requests,
+        avg_campaign_budget=avg_campaign_budget,
+        avg_influencer_reach=avg_influencer_reach,
+        campaign_success_rate=campaign_success_rate
     )
 
-@app.route("/admin/flag_user/<int:user_id>", methods=["POST"])
+@app.route("/flag_user/<int:user_id>", methods=["POST"])
 @login_required
 def flag_user(user_id):
     if current_user.role != "admin":
@@ -141,7 +166,7 @@ def flag_user(user_id):
     db.session.commit()
     
     flash(f"User {user.username} has been {'flagged' if user.flagged else 'unflagged'}.")
-    return redirect(url_for("admin_dashboard"))
+    return redirect(url_for('admin_dashboard') + '#users')
 
 @app.route("/sponsor/dashboard")
 @login_required
@@ -154,7 +179,9 @@ def sponsor_dashboard():
     campaigns = Campaign.query.filter_by(sponsor_id=sponsor.id).all()
     campaign_ids = [campaign.id for campaign in campaigns]
     ad_requests = AdRequest.query.filter(AdRequest.campaign_id.in_(campaign_ids)).all()
-    return render_template("sponsor_dashboard.html", sponsor=sponsor, campaigns=campaigns, ad_requests=ad_requests)
+    campaign_requests = CampaignRequest.query.join(Campaign).filter(Campaign.sponsor_id == sponsor.id).all()
+
+    return render_template("sponsor_dashboard.html", sponsor=sponsor, campaigns=campaigns, ad_requests=ad_requests,campaign_requests=campaign_requests)
 
 @app.route("/sponsor/create_campaign", methods=["GET", "POST"])
 @login_required
@@ -314,22 +341,39 @@ def influencer_dashboard():
     if current_user.role != "influencer":
         flash("Access denied.")
         return redirect(url_for("home"))
-    
-    influencer = Influencer.query.filter_by(user_id=current_user.id).first()
-    ad_requests = AdRequest.query.filter_by(influencer_id=influencer.id).all()
-    campaign = Campaign.query
-    return render_template("influencer_dashboard.html", influencer=influencer, ad_requests=ad_requests,campaign=campaign)
-
-@app.route("/influencer/view_ad_requests")
-@login_required
-def view_ad_requests():
-    if current_user.role != "influencer":
-        flash("Access denied.")
-        return redirect(url_for("home"))
 
     influencer = Influencer.query.filter_by(user_id=current_user.id).first()
     ad_requests = AdRequest.query.filter_by(influencer_id=influencer.id).all()
-    return render_template("view_ad_requests.html", ad_requests=ad_requests)
+    campaigns = Campaign.query.filter_by(visibility="public")
+
+    accepted_requests = sum(1 for r in ad_requests if r.status == 'accepted')
+    rejected_requests = sum(1 for r in ad_requests if r.status == 'rejected')
+    pending_requests = sum(1 for r in ad_requests if r.status == 'pending')
+    total_requests = len(ad_requests)
+    acceptance_rate = (accepted_requests / total_requests * 100) if total_requests > 0 else 0
+
+    total_earnings = sum(r.payment_amount for r in ad_requests if r.status == 'accepted')
+    avg_earnings_per_campaign = total_earnings / accepted_requests if accepted_requests > 0 else 0
+    highest_paid_campaign = max((r.payment_amount for r in ad_requests if r.status == 'accepted'), default=0)
+
+    latest_ad_request = AdRequest.query.filter_by(influencer_id=influencer.id).order_by(AdRequest.created_at.desc()).first()
+    latest_campaign_request = CampaignRequest.query.filter_by(influencer_id=influencer.id).order_by(CampaignRequest.created_at.desc()).first()
+
+    return render_template(
+        "influencer_dashboard.html",
+        influencer=influencer,
+        ad_requests=ad_requests,
+        campaigns=campaigns,
+        accepted_requests=accepted_requests,
+        rejected_requests=rejected_requests,
+        pending_requests=pending_requests,
+        acceptance_rate=round(acceptance_rate, 2),
+        total_earnings=round(total_earnings, 2),
+        avg_earnings_per_campaign=round(avg_earnings_per_campaign, 2),
+        highest_paid_campaign=round(highest_paid_campaign, 2),
+        latest_ad_request=latest_ad_request,
+        latest_campaign_request=latest_campaign_request
+    )
 
 
 @app.route("/influencer/respond_ad_request/<int:ad_request_id>", methods=["POST"])
@@ -360,7 +404,7 @@ def respond_ad_request(ad_request_id):
         flash("Invalid action.")
 
     db.session.commit()
-    return redirect(url_for("view_ad_requests"))
+    return redirect(url_for('influencer_dashboard') + '#ad-requests')
 
 @app.route("/search_influencers")
 @login_required
@@ -385,7 +429,6 @@ def search_influencers():
     
     influencers = influencers.all()
     
-    # Get the campaign if campaign_id is provided
     campaign = None
     if campaign_id:
         campaign = Campaign.query.get(campaign_id)
@@ -413,7 +456,7 @@ def search_campaigns():
         campaigns = campaigns.filter(Campaign.budget >= float(min_budget))
     
     campaigns = campaigns.all()
-    return render_template("search_campaigns.html", campaigns=campaigns)
+    return redirect(url_for("influencer_dashboard")+'#find-campaigns')
 
 @app.route("/view_campaign/<int:campaign_id>")
 @login_required
@@ -463,7 +506,6 @@ def handle_campaign_request(request_id):
 
     if action == "approve":
         campaign_request.status = "approved"
-        # Create a new AdRequest
         new_ad_request = AdRequest(
             campaign_id=campaign_request.campaign_id,
             influencer_id=campaign_request.influencer_id,
@@ -513,7 +555,7 @@ def view_requests():
     
     sponsor = Sponsor.query.filter_by(user_id=current_user.id).first()
     campaign_requests = CampaignRequest.query.join(Campaign).filter(Campaign.sponsor_id == sponsor.id).all()
-    return render_template("view_requests.html", campaign_requests=campaign_requests)
+    return redirect(url_for('sponsor_dashboard') + '#campaign-requests')
 
 @app.route("/influencer/negotiate/<int:ad_request_id>", methods=["POST"])
 @login_required
@@ -560,35 +602,23 @@ def respond_negotiation(ad_request_id):
     db.session.commit()
     return redirect(url_for("sponsor_dashboard"))
 
-
-# API routes for CRUD operations
-
-@app.route("/api/campaigns", methods=["GET"])
-def api_get_campaigns():
-    campaigns = Campaign.query.all()
-    return jsonify([campaign.to_dict() for campaign in campaigns])
-
-@app.route("/api/campaigns/<int:campaign_id>", methods=["GET"])
-def api_get_campaign(campaign_id):
-    campaign = Campaign.query.get_or_404(campaign_id)
-    return jsonify(campaign.to_dict())
-
-@app.route("/api/ad_requests", methods=["GET"])
-def api_get_ad_requests():
-    ad_requests = AdRequest.query.all()
-    return jsonify([ad_request.to_dict() for ad_request in ad_requests])
-
-@app.route("/api/ad_requests/<int:ad_request_id>", methods=["GET"])
-def api_get_ad_request(ad_request_id):
-    ad_request = AdRequest.query.get_or_404(ad_request_id)
-    return jsonify(ad_request.to_dict())
-
-@app.route("/api/influencers", methods=["GET"])
-def api_get_influencers():
-    influencers = Influencer.query.all()
-    return jsonify([influencer.to_dict() for influencer in influencers])
-
-@app.route("/api/influencers/<int:influencer_id>", methods=["GET"])
-def api_get_influencer(influencer_id):
-    influencer = Influencer.query.get_or_404(influencer_id)
-    return jsonify(influencer.to_dict())
+@app.route("/update_influencer_profile", methods=["POST"])
+@login_required
+def update_influencer_profile():
+    if current_user.role != "influencer":
+        flash("Access denied.")
+        return redirect(url_for("home"))
+    
+    influencer = Influencer.query.filter_by(user_id=current_user.id).first()
+    if not influencer:
+        flash("Influencer profile not found.")
+        return redirect(url_for("influencer_dashboard"))
+    
+    influencer.name = request.form.get("name")
+    influencer.category = request.form.get("category")
+    influencer.niche = request.form.get("niche")
+    influencer.reach = request.form.get("reach")
+    
+    db.session.commit()
+    flash("Profile updated successfully.")
+    return redirect(url_for('influencer_dashboard') + '#profile')

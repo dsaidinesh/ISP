@@ -1,32 +1,43 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Sponsor Registration</h1>
-    <form method="POST">
-        <div class="mb-3">
-            <label for="user-username" class="form-label">Username</label>
-            <input type="username" class="form-control" id="user-username" name="username">
-        </div>
-        <div class="mb-3">
-            <label for="user-email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="user-email" name="email">
-        </div>
-        <div class="mb-3">
-            <label for="user-password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="user-password" name="password">
-        </div>
-        <div class="mb-3">
-            <label for="company_name" class="form-label">Company Name/Individual Name</label>
-            <input type="text" class="form-control" id="company_name" name="company_name">
-        </div>
-        <div class="mb-3">
-            <label for="industry" class="form-label">Industry</label>
-            <input type="text" class="form-control" id="industry" name="industry">
-        </div>
-        <div class="mb-3">
-            <label for="budget" class="form-label">Budget</label>
-            <input type="number" class="form-control" id="budget" name="budget">
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+<div class="container mt-4 d-flex justify-content-center">
+    <div class="col-md-6">
+        <h2 class="text-center mb-3">Sponsor Registration</h2>
+        <form method="POST" class="p-4 border rounded bg-light">
+            <div class="form-group mb-3">
+                <label for="user-username">Username</label>
+                <input type="text" class="form-control" id="user-username" name="username" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="user-email">Email</label>
+                <input type="email" class="form-control" id="user-email" name="email" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="user-password">Password</label>
+                <input type="password" class="form-control" id="user-password" name="password" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="company_name">Company Name/Individual Name</label>
+                <input type="text" class="form-control" id="company_name" name="company_name" required>
+            </div>
+            <div class="form-group mb-3">
+                <label for="industry">Industry</label>
+                <select id="industry" name="industry" class="form-select" required>
+                    <option value="" disabled selected>Choose an industry</option>
+                    <option value="fashion">Fashion</option>
+                    <option value="beauty">Beauty</option>
+                    <option value="fitness">Fitness</option>
+                    <option value="food">Food</option>
+                    <option value="travel">Travel</option>
+                </select>
+            </div>
+            <div class="form-group mb-3">
+                <label for="budget">Budget</label>
+                <input type="number" class="form-control" id="budget" name="budget" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Submit</button>
+        </form>
+    </div>
+</div>
 {% endblock %}

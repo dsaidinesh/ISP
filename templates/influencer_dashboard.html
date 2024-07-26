@@ -1,29 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
-            <div class="sidebar-sticky">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3 sidebar-sticky">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        <a class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard" role="tab" aria-controls="dashboard" aria-selected="true">
+                            Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/influencer/view_ad_requests">
-                            <i class="fas fa-envelope"></i> My Ad Requests
+                        <a class="nav-link" id="ad-requests-tab" data-bs-toggle="tab" href="#ad-requests" role="tab" aria-controls="ad-requests" aria-selected="false">
+                            My Ad Requests
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('search_campaigns', campaign_id=campaign.id) }}">
-                            <i class="fas fa-search"></i> Find Campaigns
+                        <a class="nav-link" id="find-campaigns-tab" data-bs-toggle="tab" href="#find-campaigns" role="tab" aria-controls="find-campaigns" aria-selected="false">
+                            Find Campaigns
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-user"></i> My Profile
+                        <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">
+                            My Profile
                         </a>
                     </li>
                     <li class="nav-item">
@@ -33,69 +34,185 @@
             </div>
         </nav>
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Influencer Dashboard</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <button type="button" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-edit"></i> Update Profile
-                    </button>
-                </div>
-            </div>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card border-left-primary shadow h-100 py-2">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                        My Stats
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        Followers: {{ influencer.followers }}
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        Engagement Rate: {{ influencer.engagement_rate }}%
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        Completed Campaigns: {{ influencer.completed_campaigns }}
-                                    </div>
+            <div class="tab-content">
+               
+                <div id="dashboard" class="tab-pane fade show active" role="tabpanel" aria-labelledby="dashboard-tab">
+                    <h1 class="h2">Influencer Dashboard</h1>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Ad Request Statistics</h5>
+                                    <ul class="list-unstyled">
+                                        <li>Accepted Requests: {{ accepted_requests }}</li>
+                                        <li>Rejected Requests: {{ rejected_requests }}</li>
+                                        <li>Pending Requests: {{ pending_requests }}</li>
+                                        <li>Acceptance Rate: {{ acceptance_rate }}%</li>
+                                    </ul>
                                 </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-chart-bar fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Earnings</h5>
+                                    <ul class="list-unstyled">
+                                        <li>Total Earnings: ${{ total_earnings }}</li>
+                                        <li>Average Earnings per Campaign: ${{ avg_earnings_per_campaign }}</li>
+                                        <li>Highest Paid Campaign: ${{ highest_paid_campaign }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Profile Statistics</h5>
+                                    <ul class="list-unstyled">
+                                        <li>Category: {{ influencer.category }}</li>
+                                        <li>Niche: {{ influencer.niche }}</li>
+                                        <li>Reach: {{ influencer.reach }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Recent Activity</h5>
+                                    <ul class="list-unstyled">
+                                        <li>Latest Ad Request: {{ latest_ad_request.campaign.name if latest_ad_request else 'None' }}</li>
+                                        <li>Latest Campaign Request: {{ latest_campaign_request.campaign.name if latest_campaign_request else 'None' }}</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card border-left-success shadow h-100 py-2">
+
+                <div class="tab-pane fade" id="ad-requests" role="tabpanel" aria-labelledby="ad-requests-tab">
+                    <h2>My Ad Requests</h2>
+                    {% for ad_request in ad_requests %}
+                    <div class="card mb-3">
                         <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                        Earnings
+                            <h5 class="card-title">Campaign: {{ ad_request.campaign.name }}</h5>
+                            <p><strong>Messages:</strong> {{ ad_request.messages }}</p>
+                            <p><strong>Requirements:</strong> {{ ad_request.requirements }}</p>
+                            <p><strong>Payment Amount:</strong> ${{ ad_request.payment_amount }}</p>
+                            <p><strong>Status:</strong> {{ ad_request.status }}</p>
+
+                            {% if ad_request.status == 'pending' %}
+                                <form action="{{ url_for('respond_ad_request', ad_request_id=ad_request.id) }}" method="post">
+                                    <button type="submit" name="action" value="accept" class="btn btn-success">Accept</button>
+                                    <button type="submit" name="action" value="reject" class="btn btn-danger">Reject</button>
+                                    <div class="input-group mt-2">
+                                        <input type="number" step="0.01" name="new_amount" class="form-control" placeholder="New amount">
+                                        <div class="input-group-append">
+                                            <button type="submit" name="action" value="negotiate" class="btn btn-primary">Negotiate</button>
+                                        </div>
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        This Month: ${{ influencer.earnings_this_month }}
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                        Total: ${{ influencer.total_earnings }}
-                                    </div>
+                                </form>
+                            {% elif ad_request.status == 'negotiating' %}
+                                {% if ad_request.last_updated_by == 'sponsor' %}
+                                    <p>Sponsor's latest offer: ${{ ad_request.proposed_amount }}</p>
+                                    <form action="{{ url_for('respond_ad_request', ad_request_id=ad_request.id) }}" method="post">
+                                        <button type="submit" name="action" value="accept" class="btn btn-success">Accept Offer</button>
+                                        <button type="submit" name="action" value="reject" class="btn btn-danger">Reject Offer</button>
+                                        <div class="input-group mt-2">
+                                            <input type="number" step="0.01" name="new_amount" class="form-control" placeholder="Counter-offer amount">
+                                            <div class="input-group-append">
+                                                <button type="submit" name="action" value="negotiate" class="btn btn-primary">Send Counter-offer</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                {% else %}
+                                    <p>Waiting for sponsor's response to your offer of ${{ ad_request.proposed_amount }}</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
                                 </div>
-                                <div class="col-auto">
-                                    <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+
+                <div class="tab-pane fade" id="find-campaigns" role="tabpanel" aria-labelledby="find-campaigns-tab">
+                    <h2>Find Campaigns</h2>
+                    <form action="{{ url_for('search_campaigns') }}" method="GET" class="mb-4">
+                        <div class="form-row">
+                            <div class="col">
+                                <input type="text" name="query" class="form-control" placeholder="Search by name" value="{{ request.args.get('query', '') }}">
+                            </div>
+                            <div class="col">
+                                <select name="industry" class="form-control">
+                                    <option value="" disabled selected>Filter by industry</option>
+                                    <option value="fashion">Fashion</option>
+                                    <option value="beauty">Beauty</option>
+                                    <option value="fitness">Fitness</option>
+                                    <option value="food">Food</option>
+                                    <option value="travel">Travel</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <input type="number" name="min_budget" class="form-control" placeholder="Min Budget" step="0.01" value="{{ request.args.get('min_budget', '') }}">
+                            </div>
+                            <div class="col">
+                                <button type="submit" class="btn btn-primary">Search</button>
+                            </div>
+                        </div>
+                    </form>
+                
+                    <div class="row">
+                        {% for campaign in campaigns %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ campaign.name }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">{{ campaign.sponsor.company_name }}</h6>
+                                    <p class="card-text">{{ campaign.description[:100] }}...</p>
+                                    <p class="small">Budget: ${{ campaign.budget }}</p>
+                                    <a href="{{ url_for('view_campaign', campaign_id=campaign.id) }}" class="btn btn-primary">View Details</a>
                                 </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
                 </div>
+
+                <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <h2>My Profile</h2>
+                    <form id="profile-form" method="POST" action="{{ url_for('update_influencer_profile') }}">
+                        <div class="mb-3">
+                          <label for="name" class="form-label">Full Name</label>
+                          <input type="text" class="form-control" id="name" name="name" value="{{ influencer.name }}" required>
+                        </div>
+                        <div class="mb-3">
+                          <label for="category" class="form-label">Category</label>
+                          <input type="text" class="form-control" id="category" name="category" value="{{ influencer.category }}" required>
+                        </div>
+                        <div class="mb-3">
+                          <label for="niche" class="form-label">Niche</label>
+                          <select class="form-select" id="niche" name="niche" required>
+                            <option value="Fashion" {% if influencer.niche == 'Fashion' %}selected{% endif %}>Fashion</option>
+                            <option value="Beauty" {% if influencer.niche == 'Beauty' %}selected{% endif %}>Beauty</option>
+                            <option value="Fitness" {% if influencer.niche == 'Fitness' %}selected{% endif %}>Fitness</option>
+                            <option value="Food" {% if influencer.niche == 'Food' %}selected{% endif %}>Food</option>
+                            <option value="Travel" {% if influencer.niche == 'Travel' %}selected{% endif %}>Travel</option>
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label for="reach" class="form-label">Reach</label>
+                          <input type="number" class="form-control" id="reach" name="reach" value="{{ influencer.reach }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                      </form>
+                </div>
             </div>
-
-            <!-- Add more sections or cards as needed -->
-
         </main>
     </div>
 </div>
+
 {% endblock %}
