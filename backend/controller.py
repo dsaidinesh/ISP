@@ -179,9 +179,9 @@ def sponsor_dashboard():
     campaigns = Campaign.query.filter_by(sponsor_id=sponsor.id).all()
     campaign_ids = [campaign.id for campaign in campaigns]
     ad_requests = AdRequest.query.filter(AdRequest.campaign_id.in_(campaign_ids)).all()
-    campaign_requests = CampaignRequest.query.join(Campaign).filter(Campaign.sponsor_id == sponsor.id).all()
+    requested_ads = AdRequest.query.join(Campaign).filter(Campaign.sponsor_id == sponsor.id, AdRequest.status == 'requested').all()
 
-    return render_template("sponsor_dashboard.html", sponsor=sponsor, campaigns=campaigns, ad_requests=ad_requests,campaign_requests=campaign_requests)
+    return render_template("sponsor_dashboard.html", sponsor=sponsor, campaigns=campaigns, ad_requests=ad_requests,requested_ads=requested_ads)
 
 @app.route("/sponsor/create_campaign", methods=["GET", "POST"])
 @login_required
@@ -357,7 +357,6 @@ def influencer_dashboard():
     highest_paid_campaign = max((r.payment_amount for r in ad_requests if r.status == 'accepted'), default=0)
 
     latest_ad_request = AdRequest.query.filter_by(influencer_id=influencer.id).order_by(AdRequest.created_at.desc()).first()
-    latest_campaign_request = CampaignRequest.query.filter_by(influencer_id=influencer.id).order_by(CampaignRequest.created_at.desc()).first()
 
     return render_template(
         "influencer_dashboard.html",
@@ -372,7 +371,6 @@ def influencer_dashboard():
         avg_earnings_per_campaign=round(avg_earnings_per_campaign, 2),
         highest_paid_campaign=round(highest_paid_campaign, 2),
         latest_ad_request=latest_ad_request,
-        latest_campaign_request=latest_campaign_request
     )
 
 
@@ -462,68 +460,55 @@ def search_campaigns():
 @login_required
 def view_campaign(campaign_id):
     campaign = Campaign.query.get_or_404(campaign_id)
-    return render_template("view_campaign.html", campaign=campaign)
+    ad_requests = AdRequest.query.filter_by(campaign_id=campaign_id, status='pending').all()
+    return render_template("view_campaign.html", campaign=campaign, ad_requests=ad_requests)
 
-@app.route("/submit_campaign_request/<int:campaign_id>", methods=["GET", "POST"])
+
+@app.route("/request_ad/<int:ad_request_id>", methods=["POST"])
 @login_required
-def submit_campaign_request(campaign_id):
+def request_ad(ad_request_id):
     if current_user.role != "influencer":
         flash("Access denied.")
         return redirect(url_for("home"))
     
-    campaign = Campaign.query.get_or_404(campaign_id)
+    ad_request = AdRequest.query.get_or_404(ad_request_id)
     influencer = Influencer.query.filter_by(user_id=current_user.id).first()
     
-    if request.method == "POST":
-        messages = request.form.get("messages")
-        requirements = request.form.get("requirements")
-        payment_amount = float(request.form.get("payment_amount"))
-        
-        new_request = CampaignRequest(
-            campaign_id=campaign_id,
-            influencer_id=influencer.id,
-            messages=messages,
-            requirements=requirements,
-            proposed_payment=payment_amount,
-            status="pending"
-        )
-        db.session.add(new_request)
-        db.session.commit()
-        flash("Campaign request submitted successfully.")
-        return redirect(url_for("search_campaigns"))
+    if ad_request.status != 'pending':
+        flash("This ad request is no longer available.")
+        return redirect(url_for("view_campaign", campaign_id=ad_request.campaign_id))
     
-    return render_template("submit_campaign_request.html", campaign=campaign)
+    ad_request.influencer_id = influencer.id
+    ad_request.status = 'requested'
+    db.session.commit()
+    
+    flash("Ad request submitted successfully.")
+    return redirect(url_for("view_campaign", campaign_id=ad_request.campaign_id))
 
-@app.route("/sponsor/handle_campaign_request/<int:request_id>", methods=["POST"])
+    
+
+
+@app.route("/sponsor/handle_ad_request/<int:ad_request_id>", methods=["POST"])
 @login_required
-def handle_campaign_request(request_id):
+def handle_ad_request(ad_request_id):
     if current_user.role != "sponsor":
         flash("Access denied.")
         return redirect(url_for("home"))
 
-    campaign_request = CampaignRequest.query.get_or_404(request_id)
+    ad_request = AdRequest.query.get_or_404(ad_request_id)
     action = request.form.get("action")
 
-    if action == "approve":
-        campaign_request.status = "approved"
-        new_ad_request = AdRequest(
-            campaign_id=campaign_request.campaign_id,
-            influencer_id=campaign_request.influencer_id,
-            messages=campaign_request.messages,
-            requirements=campaign_request.requirements,
-            payment_amount=campaign_request.proposed_payment,
-            status="accepted"
-        )
-        db.session.add(new_ad_request)
-        flash("Campaign request approved and ad request created.")
+    if action == "accept":
+        ad_request.status = "accepted"
+        flash("Ad request accepted.")
     elif action == "reject":
-        campaign_request.status = "rejected"
-        flash("Campaign request rejected.")
+        ad_request.status = "rejected"
+        flash("Ad request rejected.")
     else:
         flash("Invalid action.")
 
     db.session.commit()
-    return redirect(url_for("view_requests"))
+    return redirect(url_for('sponsor_dashboard') + '#campaign-requests')
 
 @app.route("/request_campaign/<int:campaign_id>", methods=["POST"])
 @login_required
@@ -545,17 +530,6 @@ def request_campaign(campaign_id):
         flash("Campaign request sent successfully.")
     
     return redirect(url_for("view_campaign", campaign_id=campaign_id))
-
-@app.route("/sponsor/view_requests")
-@login_required
-def view_requests():
-    if current_user.role != "sponsor":
-        flash("Access denied.")
-        return redirect(url_for("home"))
-    
-    sponsor = Sponsor.query.filter_by(user_id=current_user.id).first()
-    campaign_requests = CampaignRequest.query.join(Campaign).filter(Campaign.sponsor_id == sponsor.id).all()
-    return redirect(url_for('sponsor_dashboard') + '#campaign-requests')
 
 @app.route("/influencer/negotiate/<int:ad_request_id>", methods=["POST"])
 @login_required
@@ -600,7 +574,7 @@ def respond_negotiation(ad_request_id):
         flash("Counter-offer sent to influencer.")
 
     db.session.commit()
-    return redirect(url_for("sponsor_dashboard"))
+    return redirect(url_for("sponsor_dashboard")+"##ad-requests")
 
 @app.route("/update_influencer_profile", methods=["POST"])
 @login_required

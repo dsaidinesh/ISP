@@ -38,8 +38,13 @@
         </div>
 
         <div class="mb-3">
+            {%if ad_request.status=="accepted"%}
+            <label for="payment_amount" class="form-label">Payment Amount:</label>
+            <input type="number" class="form-control" id="payment_amount" name="payment_amount" value="{{ ad_request.payment_amount }}" step="0.01" readonly>
+            {%else%}
             <label for="payment_amount" class="form-label">Payment Amount:</label>
             <input type="number" class="form-control" id="payment_amount" name="payment_amount" value="{{ ad_request.payment_amount }}" step="0.01" required>
+            {%endif%}
         </div>
 
         <div class="mb-3">

@@ -1,22 +1,47 @@
 {% extends "base.html" %}
 {% block content %}
+
 <div class="container">
     <h2>Campaign Details</h2>
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">{{ campaign.name }}</h5>
-            <p class="card-text">{{ campaign.description }}</p>
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item">Start Date: {{ campaign.start_date }}</li>
-                <li class="list-group-item">End Date: {{ campaign.end_date }}</li>
-                <li class="list-group-item">Budget: ${{ campaign.budget }}</li>
-                <li class="list-group-item">Visibility: {{ campaign.visibility }}</li>
-                <li class="list-group-item">Goals: {{ campaign.goals }}</li>
+            <p>{{ campaign.description }}</p>
+            <ul>
+                <li>Start Date: {{ campaign.start_date }}</li>
+                <li>End Date: {{ campaign.end_date }}</li>
+                <li>Budget: ${{ campaign.budget }}</li>
+                <li>Visibility: {{ campaign.visibility }}</li>
+                <li>Goals: {{ campaign.goals }}</li>
             </ul>
         </div>
     </div>
+
     {% if current_user.role == 'influencer' %}
-    <a href="{{ url_for('submit_campaign_request', campaign_id=campaign.id) }}" class="btn btn-primary mt-3">Request Campaign</a>
+    <h3 class="mt-4">Available Ad Requests</h3>
+    {% for ad_request in ad_requests %}
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Ad Request #{{ ad_request.id }}</h5>
+            <p>Status: {{ ad_request.status }}</p>
+            {% if ad_request.messages %}
+            <p>Messages: {{ ad_request.messages }}</p>
+            {% endif %}
+            {% if ad_request.requirements %}
+            <p>Requirements: {{ ad_request.requirements }}</p>
+            {% endif %}
+            {% if ad_request.payment_amount %}
+            <p>Payment Amount: ${{ ad_request.payment_amount }}</p>
+            {% endif %}
+            <form action="{{ url_for('request_ad', ad_request_id=ad_request.id) }}" method="POST">
+                <button type="submit" class="btn btn-primary">Request Ad</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <p>No available ad requests for this campaign.</p>
+    {% endfor %}
     {% endif %}
 </div>
+
 {% endblock %}

@@ -44,7 +44,6 @@ class Influencer(db.Model):
     reach = db.Column(db.Integer)
     user = relationship('User', backref=db.backref('influencer', uselist=False))
     ad_requests = relationship('AdRequest', back_populates='influencer')
-    requests = relationship('CampaignRequest', back_populates='influencer')
 
 
 class Campaign(db.Model):
@@ -60,7 +59,6 @@ class Campaign(db.Model):
     goals = db.Column(db.Text)
     sponsor = relationship('Sponsor', back_populates='campaigns')
     ad_requests = relationship('AdRequest', back_populates='campaign')
-    requests = relationship('CampaignRequest', back_populates='campaign')
 
 
 class AdRequest(db.Model):
@@ -71,7 +69,7 @@ class AdRequest(db.Model):
     messages = db.Column(db.Text)
     requirements = db.Column(db.Text)
     payment_amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.Enum('pending', 'accepted', 'rejected', 'negotiating'), nullable=False, default='pending')
+    status = db.Column(db.Enum('pending', 'accepted', 'rejected', 'negotiating','requested'), nullable=False, default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     campaign = relationship('Campaign', back_populates='ad_requests')
@@ -79,16 +77,4 @@ class AdRequest(db.Model):
     proposed_amount = db.Column(db.Float)  # Add this field to store the proposed amount during negotiation
     last_updated_by = db.Column(db.Enum('sponsor', 'influencer'))  # Add this field to track who last updated the request
 
-class CampaignRequest(db.Model):
-    __tablename__ = 'campaign_requests'
-    id = db.Column(db.Integer, primary_key=True)
-    campaign_id = db.Column(db.Integer, db.ForeignKey('campaigns.id'), nullable=False)
-    influencer_id = db.Column(db.Integer, db.ForeignKey('influencers.id'), nullable=False)
-    messages = db.Column(db.Text)
-    requirements = db.Column(db.Text)
-    proposed_payment = db.Column(db.Float)
-    status = db.Column(db.String(20), default="pending")
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    campaign = db.relationship('Campaign', back_populates='requests')
-    influencer = db.relationship('Influencer', back_populates='requests')
+
