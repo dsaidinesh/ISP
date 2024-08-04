@@ -344,7 +344,23 @@ def influencer_dashboard():
 
     influencer = Influencer.query.filter_by(user_id=current_user.id).first()
     ad_requests = AdRequest.query.filter_by(influencer_id=influencer.id).all()
-    campaigns = Campaign.query.filter_by(visibility="public")
+    pending_campaigns = Campaign.query.join(AdRequest).filter(
+        AdRequest.influencer_id == influencer.id,
+        AdRequest.status == 'pending'
+    ).distinct()
+
+    query = request.args.get("query")
+    industry = request.args.get("industry")
+    min_budget = request.args.get("min_budget")
+    
+    if query:
+        pending_campaigns = pending_campaigns.filter(Campaign.name.ilike(f"%{query}%"))
+    if industry:
+        pending_campaigns = pending_campaigns.join(Sponsor).filter(Sponsor.industry == industry)
+    if min_budget:
+        pending_campaigns = pending_campaigns.filter(Campaign.budget >= float(min_budget))
+    
+    pending_campaigns = pending_campaigns.all()
 
     accepted_requests = sum(1 for r in ad_requests if r.status == 'accepted')
     rejected_requests = sum(1 for r in ad_requests if r.status == 'rejected')
@@ -362,7 +378,7 @@ def influencer_dashboard():
         "influencer_dashboard.html",
         influencer=influencer,
         ad_requests=ad_requests,
-        campaigns=campaigns,
+        pending_campaigns=pending_campaigns,
         accepted_requests=accepted_requests,
         rejected_requests=rejected_requests,
         pending_requests=pending_requests,

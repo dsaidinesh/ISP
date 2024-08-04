@@ -13,7 +13,11 @@
             <label for="password" class="fw-bold text-center d-block font-monospace">Password</label>
             <input type="password" class="form-control" id="password" name="password" required>
         </div>
-        <br>
+        <div class="form-group mb-2">
+            <label for="register">New User </label>
+            <a href="{{url_for('home')}}">register</a>
+        </div>
+
         <button type="submit" class="btn btn-primary w-100">Login</button>
     </form>
 </div>

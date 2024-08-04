@@ -49,6 +49,11 @@
                 <label for="reach">Reach</label>
                 <input type="number" class="form-control" id="reach" name="reach" required>
             </div>
+            <div class="form-group mb-3">
+                <label for="login">Already registered? </label>
+                <a href="{{url_for('login')}}" name="login">login</a>
+            </div>
+
             <button type="submit" class="btn btn-primary w-100">Register</button>
         </form>
     </div>
