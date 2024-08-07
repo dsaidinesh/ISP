@@ -437,12 +437,11 @@ def search_influencers():
     if query:
         influencers = influencers.filter(Influencer.name.ilike(f"%{query}%"))
     if category:
-        influencers = influencers.filter_by(category=category)
+        influencers = influencers.filter_by(niche = category  )
     if min_reach:
         influencers = influencers.filter(Influencer.reach >= int(min_reach))
     
     influencers = influencers.all()
-    
     campaign = None
     if campaign_id:
         campaign = Campaign.query.get(campaign_id)

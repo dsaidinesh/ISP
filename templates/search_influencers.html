@@ -15,11 +15,12 @@
             </div>
             <div class="col">
                 <select name="category" class="form-control">
-                    <option value="">All Categories</option>
-                    <option value="Fashion">Fashion</option>
-                    <option value="Technology">Technology</option>
-                    <option value="Lifestyle">Lifestyle</option>
-                    <option value="Food">Food</option>
+                    <option value="" disabled selected>Filter by niche</option>
+                    <option value="Fashion" {% if request.args.get('industry') == 'Fashion' %}selected{% endif %}>Fashion</option>
+                    <option value="Beauty" {% if request.args.get('industry') == 'Beauty' %}selected{% endif %}>Beauty</option>
+                    <option value="Fitness" {% if request.args.get('industry') == 'Fitness' %}selected{% endif %}>Fitness</option>
+                    <option value="Food" {% if request.args.get('industry') == 'Food' %}selected{% endif %}>Food</option>
+                    <option value="Travel" {% if request.args.get('industry') == 'Travel' %}selected{% endif %}>Travel</option>
                 </select>
             </div>
             <div class="col">

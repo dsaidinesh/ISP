@@ -74,7 +74,7 @@ class AdRequest(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     campaign = relationship('Campaign', back_populates='ad_requests')
     influencer = relationship('Influencer', back_populates='ad_requests')
-    proposed_amount = db.Column(db.Float)  # Add this field to store the proposed amount during negotiation
-    last_updated_by = db.Column(db.Enum('sponsor', 'influencer'))  # Add this field to track who last updated the request
+    proposed_amount = db.Column(db.Float)  
+    last_updated_by = db.Column(db.Enum('sponsor', 'influencer'))  
 
 
