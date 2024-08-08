@@ -345,7 +345,6 @@ def influencer_dashboard():
     influencer = Influencer.query.filter_by(user_id=current_user.id).first()
     ad_requests = AdRequest.query.filter_by(influencer_id=influencer.id).all()
     pending_campaigns = Campaign.query.join(AdRequest).filter(
-        AdRequest.influencer_id == influencer.id,
         AdRequest.status == 'pending'
     ).distinct()
 
@@ -449,28 +448,6 @@ def search_influencers():
     return render_template("search_influencers.html", influencers=influencers, campaign=campaign)
 
 
-@app.route("/search_campaigns")
-@login_required
-def search_campaigns():
-    if current_user.role != "influencer":
-        flash("Access denied.")
-        return redirect(url_for("home"))
-
-    query = request.args.get("query")
-    industry = request.args.get("industry")
-    min_budget = request.args.get("min_budget")
-    
-    campaigns = Campaign.query.filter_by(visibility="public")
-    if query:
-        campaigns = campaigns.filter(Campaign.name.ilike(f"%{query}%"))
-    if industry:
-        campaigns = campaigns.join(Sponsor).filter(Sponsor.industry == industry)
-    if min_budget:
-        campaigns = campaigns.filter(Campaign.budget >= float(min_budget))
-    
-    campaigns = campaigns.all()
-    return redirect(url_for("influencer_dashboard")+'#find-campaigns')
-
 @app.route("/view_campaign/<int:campaign_id>")
 @login_required
 def view_campaign(campaign_id):
@@ -499,9 +476,6 @@ def request_ad(ad_request_id):
     
     flash("Ad request submitted successfully.")
     return redirect(url_for("view_campaign", campaign_id=ad_request.campaign_id))
-
-    
-
 
 @app.route("/sponsor/handle_ad_request/<int:ad_request_id>", methods=["POST"])
 @login_required
@@ -589,7 +563,7 @@ def respond_negotiation(ad_request_id):
         flash("Counter-offer sent to influencer.")
 
     db.session.commit()
-    return redirect(url_for("sponsor_dashboard")+"##ad-requests")
+    return redirect(url_for("sponsor_dashboard")+"#ad-requests")
 
 @app.route("/update_influencer_profile", methods=["POST"])
 @login_required
