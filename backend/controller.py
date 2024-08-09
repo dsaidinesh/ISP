@@ -262,7 +262,7 @@ def delete_campaign(campaign_id):
         db.session.rollback()
         flash(f"An error occurred while deleting the campaign: {str(e)}")
 
-    return redirect(url_for("sponsor_dashboard"))
+    return redirect(url_for("sponsor_dashboard")+"#campaigns")
 
 @app.route("/sponsor/create_ad_request/<int:campaign_id>", methods=["GET", "POST"])
 @login_required
@@ -333,7 +333,7 @@ def delete_ad_request(ad_request_id):
     db.session.delete(ad_request)
     db.session.commit()
     flash("Ad request deleted successfully.")
-    return redirect(url_for("sponsor_dashboard"))
+    return redirect(url_for("sponsor_dashboard")+"#ad-requests")
 
 @app.route("/influencer/dashboard")
 @login_required

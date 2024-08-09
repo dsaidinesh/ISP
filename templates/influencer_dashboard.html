@@ -147,6 +147,7 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <button type="submit" class="btn btn-primary">Search</button>
+                                <a href="{{ url_for('influencer_dashboard',campaign_id=campaign.id if campaign else None) }}#find-campaigns" class="btn btn-secondary" id="clear-filters">Clear Filters</a>
                             </div>
                         </div>
                     </form>
