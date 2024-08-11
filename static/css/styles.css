@@ -50,7 +50,22 @@ body {
 
 .buttons {
     display: flex;
-    justify-content:space-evenly;
+    justify-content: space-between;
+    margin-top: 40px;
+}
+
+.buttons a {
+    width: 45%;
+    margin: 10px;
+    font-size: 18px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.buttons button:hover {
+    opacity: 0.8;
 }
 .flash-messages {
     position: fixed;
